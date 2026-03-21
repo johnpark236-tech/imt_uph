@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>IMT UPH 계산기</title>
+    <style>
+        body { 
+            font-family: 'Malgun Gothic', sans-serif; 
+            background-color: #f4f7f6; 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            /* 스마트폰 키패드 올라올 때 대비 */
+            min-height: 100vh; 
+        }
+        
+        .calculator { 
+            background: white; 
+            width: 100%; 
+            max-width: 400px; /* 모바일에 꽉 차게 */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 💡 1. 최상단 고정 결과창 (Sticky) */
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: linear-gradient(135deg, #0078D7, #005A9E);
+            color: white; 
+            padding: 20px 15px;
+            text-align: center; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            border-bottom-left-radius: 15px;
+            border-bottom-right-radius: 15px;
+        }
+
+        .result-title { 
+            font-size: 14px; 
+            margin-bottom: 5px; 
+            opacity: 0.9; 
+            letter-spacing: 1px;
+        }
+        
+        /* 💡 2. 다이나믹 애니메이션을 위한 기본 스타일 */
+        .result-value { 
+            font-size: 42px; 
+            font-weight: bold; 
+            display: inline-block;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.2s; 
+        }
+
+        /* JS로 값이 바뀔 때 순간적으로 추가될 클래스 */
+        .result-value.pop {
+            transform: scale(1.2); /* 1.2배 커짐 */
+            color: #FFD700; /* 노란색(골드)으로 반짝임 */
+        }
+
+        h2 { 
+            text-align: center; 
+            color: #333; 
+            margin: 25px 0 15px 0; 
+            font-size: 20px;
+        }
+
+        .inputs-container {
+            padding: 0 20px 30px 20px;
+        }
+
+        .input-group { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 12px; 
+            padding: 12px 15px; 
+            background: #f9f9f9; 
+            border-radius: 8px; 
+            border: 1px solid #eaeaea;
+        }
+        
+        label { font-weight: bold; color: #555; font-size: 14px; }
+        
+        input { 
+            width: 90px; 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 6px; 
+            text-align: right; 
+            font-size: 16px; 
+            font-weight: bold; 
+            color: #0078D7; 
+            background-color: white;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #0078D7;
+            box-shadow: 0 0 5px rgba(0, 120, 215, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+<div class="calculator">
+    
+    <div class="sticky-header">
+        <div class="result-title">예상 UPH</div>
+        <div class="result-value" id="uph_result">128.7</div>
+    </div>
+
+    <h2>IMT 양산 UPH 계산기</h2>
+
+    <div class="inputs-container">
+        <div class="input-group">
+            <label>Lot 수량 (개)</label>
+            <input type="number" inputmode="decimal" id="lot" value="56" oninput="calculate()">
+        </div>
+        <div class="input-group">
+            <label>초기 로딩 (초)</label>
+            <input type="number" inputmode="decimal" id="init" value="132" oninput="calculate()">
+        </div>
+        <div class="input-group">
+            <label>핸들러 시간 (초)</label>
+            <input type="number" inputmode="decimal" id="handler" value="26" oninput="calculate()">
+        </div>
+        <div class="input-group">
+            <label>검사 시간 (초)</label>
+            <input type="number" inputmode="decimal" id="tester" value="15" oninput="calculate()">
+        </div>
+        <div class="input-group">
+            <label>최종 배출 (초)</label>
+            <input type="number" inputmode="decimal" id="final" value="5" oninput="calculate()">
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function calculate() {
+        const lot = parseFloat(document.getElementById('lot').value) || 0;
+        const init = parseFloat(document.getElementById('init').value) || 0;
+        const handler = parseFloat(document.getElementById('handler').value) || 0;
+        const tester = parseFloat(document.getElementById('tester').value) || 0;
+        const finalTime = parseFloat(document.getElementById('final').value) || 0;
+        
+        const resultEl = document.getElementById('uph_result');
+        let newUph = "0.0";
+
+        if(lot > 1) {
+            const bottleneck = Math.max(handler, tester);
+            const totalSec = init + (bottleneck * (lot - 1)) + finalTime;
+            
+            if(totalSec > 0) {
+                newUph = ((3600 / totalSec) * lot).toFixed(1);
+            }
+        }
+
+        // 값이 이전과 다를 때만 업데이트하고 다이나믹 애니메이션 실행
+        if(resultEl.innerText !== newUph) {
+            resultEl.innerText = newUph;
+            
+            // CSS 애니메이션 트리거 (클래스 뗐다 붙이기)
+            resultEl.classList.remove('pop');
+            void resultEl.offsetWidth; // 브라우저에게 변경사항을 강제로 인식시킴 (Reflow)
+            resultEl.classList.add('pop');
+            
+            // 0.2초 후 팝 효과 제거 (원래 상태로 자연스럽게 복귀)
+            setTimeout(() => {
+                resultEl.classList.remove('pop');
+            }, 200);
+        }
+    }
+</script>
+
+</body>
+</html>
