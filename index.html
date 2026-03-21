@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IMT UPH 계산기</title>
+    <title>IMT UPH</title>
     <style>
         body { 
             font-family: 'Malgun Gothic', sans-serif; 
@@ -59,12 +59,13 @@
         .formula-text {
             font-size: 13px;
             margin-top: 8px;
-            color: rgba(255, 255, 255, 0.9);
+            color: rgba(255, 255, 255, 0.95);
             letter-spacing: 0.5px;
             background: rgba(0, 0, 0, 0.15);
-            padding: 5px 10px;
-            border-radius: 20px;
+            padding: 8px 12px;
+            border-radius: 8px;
             display: inline-block;
+            word-break: keep-all;
         }
 
         .bottleneck-text {
@@ -84,14 +85,13 @@
             font-weight: bold;
         }
 
-        /* 💡 수정된 4초 룰 안내 문구 CSS */
         .retry-note {
             font-size: 11px;
             color: #dcedc8;
             display: block;
             margin-top: 8px;
             word-break: keep-all;
-            background: rgba(0,0,0,0.1);
+            background: rgba(0, 0, 0, 0.1);
             padding: 6px;
             border-radius: 6px;
         }
@@ -111,14 +111,14 @@
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            margin-bottom: 12px; 
-            padding: 10px 15px; 
+            margin-bottom: 10px; 
+            padding: 8px 15px; 
             background: #f9f9f9; 
             border-radius: 8px; 
             border: 1px solid #eaeaea;
         }
         
-        label { font-weight: bold; color: #555; font-size: 14px; }
+        label { font-weight: bold; color: #555; font-size: 13px; }
 
         .custom-number-wrapper {
             display: flex;
@@ -127,8 +127,8 @@
             border-radius: 6px;
             background-color: white;
             overflow: hidden;
-            width: 105px;
-            height: 38px;
+            width: 95px;
+            height: 36px;
         }
 
         .custom-number-wrapper:focus-within {
@@ -142,7 +142,7 @@
             padding: 0 5px 0 10px; 
             border: none; 
             text-align: right; 
-            font-size: 16px; 
+            font-size: 15px; 
             font-weight: bold; 
             color: #0078D7; 
             outline: none;
@@ -163,7 +163,7 @@
             flex-direction: column;
             border-left: 1px solid #ccc;
             height: 100%;
-            width: 32px;
+            width: 28px;
             background-color: #f1f1f1;
         }
 
@@ -172,7 +172,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 11px;
+            font-size: 10px;
             color: #555;
             cursor: pointer;
             user-select: none;
@@ -194,9 +194,10 @@
     
     <div class="sticky-header">
         <div class="result-title">예상 UPH</div>
-        <div class="result-value" id="uph_result">128.7</div>
+        <div class="result-value" id="uph_result">0.0</div>
         <br>
-        <div class="formula-text" id="formula_result">= 132 + (26 × 55) + 5 = 1567초</div>
+        <div class="formula-text" id="formula_result">
+            </div>
         <div class="bottleneck-text" id="bottleneck_result">
             </div>
     </div>
@@ -205,7 +206,7 @@
 
     <div class="inputs-container">
         <div class="input-group">
-            <label>Lot 수량 (개)</label>
+            <label>Lot 수량</label>
             <div class="custom-number-wrapper">
                 <input type="number" inputmode="decimal" id="lot" value="56" oninput="calculate()">
                 <div class="spinner-btns">
@@ -216,7 +217,7 @@
         </div>
         
         <div class="input-group">
-            <label>초기 로딩 (초)</label>
+            <label id="label_init">핸들러  [소켓 in/ 6회] (초)</label>
             <div class="custom-number-wrapper">
                 <input type="number" inputmode="decimal" id="init" value="132" oninput="calculate()">
                 <div class="spinner-btns">
@@ -227,7 +228,7 @@
         </div>
         
         <div class="input-group">
-            <label>핸들러 시간 (초)</label>
+            <label id="label_handler">핸들러  [소켓 in/out 50회] (초)</label>
             <div class="custom-number-wrapper">
                 <input type="number" inputmode="decimal" id="handler" value="26" oninput="calculate()">
                 <div class="spinner-btns">
@@ -240,16 +241,38 @@
         <div class="input-group">
             <label>검사 시간 (초)</label>
             <div class="custom-number-wrapper">
-                <input type="number" inputmode="decimal" id="tester" value="17" oninput="calculate()">
+                <input type="number" inputmode="decimal" id="tester" value="21" oninput="calculate()">
                 <div class="spinner-btns">
                     <div class="spin-btn spin-up" onclick="stepValue('tester', 1)">▲</div>
                     <div class="spin-btn spin-down" onclick="stepValue('tester', -1)">▼</div>
                 </div>
             </div>
         </div>
+
+        <div class="input-group">
+            <label id="label_unload5">핸들러 [소켓 out 5회] (초)</label>
+            <div class="custom-number-wrapper">
+                <input type="number" inputmode="decimal" id="unload5" value="17" oninput="calculate()">
+                <div class="spinner-btns">
+                    <div class="spin-btn spin-up" onclick="stepValue('unload5', 1)">▲</div>
+                    <div class="spin-btn spin-down" onclick="stepValue('unload5', -1)">▼</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label id="label_unload1">핸들러 [소켓 out 1회] (초)</label>
+            <div class="custom-number-wrapper">
+                <input type="number" inputmode="decimal" id="unload1" value="7" oninput="calculate()">
+                <div class="spinner-btns">
+                    <div class="spin-btn spin-up" onclick="stepValue('unload1', 1)">▲</div>
+                    <div class="spin-btn spin-down" onclick="stepValue('unload1', -1)">▼</div>
+                </div>
+            </div>
+        </div>
         
         <div class="input-group">
-            <label>최종 배출 (초)</label>
+            <label id="label_final">최종 트레이 배출 [종료] (초)</label>
             <div class="custom-number-wrapper">
                 <input type="number" inputmode="decimal" id="final" value="5" oninput="calculate()">
                 <div class="spinner-btns">
@@ -279,6 +302,8 @@
         const init = parseFloat(document.getElementById('init').value) || 0;
         const handler = parseFloat(document.getElementById('handler').value) || 0;
         const tester = parseFloat(document.getElementById('tester').value) || 0;
+        const unload5 = parseFloat(document.getElementById('unload5').value) || 0;
+        const unload1 = parseFloat(document.getElementById('unload1').value) || 0;
         const finalTime = parseFloat(document.getElementById('final').value) || 0;
         
         const resultEl = document.getElementById('uph_result');
@@ -286,40 +311,46 @@
         const bottleneckEl = document.getElementById('bottleneck_result'); 
         
         let newUph = "0.0";
-        // 💡 수정된 안내 문구
-        const retryNote = `<span class="retry-note">※ 핸들러는 4초 이상 여유 필요, retry 발생시 UPH에 영향 없을것으로 예상됨.</span>`;
+        // 💡 뉘앙스 수정: Retry가 발생하더라도 UPH에 영향이 "없다"는 방어 논리 강조
+        const retryNote = `<span class="retry-note">※ 핸들러가 4초 이상 여유가 있을 경우, Retry가 발생하더라도 검사 시간에 묻히므로 최종 UPH에는 영향이 없습니다.</span>`;
 
-        if(lot > 1) {
+        const cycleCount = lot >= 6 ? lot - 6 : 0;
+
+        // 💡 자바스크립트에서 텍스트 업데이트 시 시간 단위 '(초)'를 유지하도록 수정
+        document.getElementById('label_init').innerText = `핸들러 [소켓 in/ 6회] (초)`;
+        document.getElementById('label_handler').innerText = `핸들러 [소켓 in/out ${cycleCount}회] (초)`;
+        document.getElementById('label_unload5').innerText = `핸들러 [소켓 out 5회] (초)`;
+        document.getElementById('label_unload1').innerText = `핸들러 [소켓 out 1회] (초)`;
+        document.getElementById('label_final').innerText = `최종 트레이 배출 [종료] (초)`;
+
+        if(lot >= 6) {
             const bottleneck = Math.max(handler, tester);
-            const cycleCount = lot - 1;
-            const totalSec = init + (bottleneck * cycleCount) + finalTime;
+            const totalSec = init + (bottleneck * cycleCount) + (unload5 * 5) + unload1 + finalTime;
             
             if(totalSec > 0) {
                 newUph = ((3600 / totalSec) * lot).toFixed(1);
-                formulaEl.innerText = `= ${init} + (${bottleneck} × ${cycleCount}) + ${finalTime} = ${totalSec}초`;
                 
-                // 💡 4초 마진 룰에 따른 다이내믹 피드백
+                formulaEl.innerHTML = `= ${init} + (${bottleneck} × ${cycleCount}) + (${unload5} × 5) + ${unload1} + ${finalTime} = <strong style="color:#FFD700; font-size:14px;">총 ${totalSec}초</strong>`;
+                
                 if(handler > tester) {
                     const margin = parseFloat((handler - tester).toFixed(1));
-                    bottleneckEl.innerHTML = `⚠️ <b>핸들러 병목</b> (${handler}초 &gt; ${tester}초)<br><span class="bottleneck-highlight">검사 시간은 ${margin}초 여유</span><br>${retryNote}`;
+                    bottleneckEl.innerHTML = `⚠️ <b>핸들러 병목</b> (${handler}초 &gt; ${tester}초)<br><span class="bottleneck-highlight">검사 시간은 ${margin}초 여유</span>`;
                 } else if(tester > handler) {
                     const margin = parseFloat((tester - handler).toFixed(1));
                     if(margin >= 4) {
-                        // 4초 이상 여유: 최적 상태 표기
                         bottleneckEl.innerHTML = `✅ <b>검사 병목 (최적)</b> (${tester}초 &gt; ${handler}초)<br><span class="optimal-highlight">핸들러 시간은 ${margin}초 여유 (핸들러 4초 여유 있을때가 최적임)</span><br>${retryNote}`;
                     } else {
-                        // 4초 미만 여유
-                        bottleneckEl.innerHTML = `⚠️ <b>검사 병목</b> (${tester}초 &gt; ${handler}초)<br><span class="bottleneck-highlight">핸들러 시간은 ${margin}초 여유 (4초 여유 부족)</span><br>${retryNote}`;
+                        bottleneckEl.innerHTML = `⚠️ <b>검사 병목</b> (${tester}초 &gt; ${handler}초)<br><span class="bottleneck-highlight">핸들러 시간은 ${margin}초 여유 (4초 여유 부족)</span>`;
                     }
                 } else {
-                    bottleneckEl.innerHTML = `⚠️ <b>병목 없음 (균형)</b> (${handler}초 = ${tester}초)<br><span class="bottleneck-highlight">핸들러 여유 시간 없음 (4초 여유 부족)</span><br>${retryNote}`;
+                    bottleneckEl.innerHTML = `⚠️ <b>병목 없음 (균형)</b> (${handler}초 = ${tester}초)<br><span class="bottleneck-highlight">핸들러 여유 시간 없음 (4초 여유 부족)</span>`;
                 }
             } else {
                 formulaEl.innerText = "= 총 소요 시간 0초";
                 bottleneckEl.innerHTML = "";
             }
         } else {
-            formulaEl.innerText = "= 최소 2개 이상의 Lot 필요";
+            formulaEl.innerText = "= 최소 6개 이상의 Lot 필요";
             bottleneckEl.innerHTML = "";
         }
 
