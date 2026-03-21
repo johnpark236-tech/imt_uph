@@ -56,6 +56,29 @@
             color: #FFD700; 
         }
 
+        .formula-text {
+            font-size: 13px;
+            margin-top: 8px;
+            color: rgba(255, 255, 255, 0.9);
+            letter-spacing: 0.5px;
+            background: rgba(0, 0, 0, 0.15);
+            padding: 5px 10px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .bottleneck-text {
+            font-size: 12px;
+            margin-top: 8px;
+            color: rgba(255, 255, 255, 0.85);
+            line-height: 1.4;
+        }
+        
+        .bottleneck-highlight {
+            color: #FFD700; 
+            font-weight: bold;
+        }
+
         h2 { 
             text-align: center; 
             color: #333; 
@@ -80,7 +103,6 @@
         
         label { font-weight: bold; color: #555; font-size: 14px; }
 
-        /* 💡 커스텀 숫자 입력창 래퍼 설정 */
         .custom-number-wrapper {
             display: flex;
             align-items: center;
@@ -110,7 +132,6 @@
             box-sizing: border-box;
         }
 
-        /* 💡 기본 스피너(화살표) 완벽히 숨기기 (PC/Mobile 공통) */
         input[type="number"]::-webkit-outer-spin-button,
         input[type="number"]::-webkit-inner-spin-button {
             -webkit-appearance: none;
@@ -120,7 +141,6 @@
             -moz-appearance: textfield;
         }
 
-        /* 💡 커스텀 화살표 버튼 디자인 */
         .spinner-btns {
             display: flex;
             flex-direction: column;
@@ -139,11 +159,11 @@
             color: #555;
             cursor: pointer;
             user-select: none;
-            -webkit-tap-highlight-color: transparent; /* 모바일 터치 시 파란 박스 제거 */
+            -webkit-tap-highlight-color: transparent; 
         }
 
         .spin-btn:active {
-            background-color: #dcdcdc; /* 터치 시 눌리는 시각 효과 */
+            background-color: #dcdcdc; 
         }
 
         .spin-up {
@@ -158,6 +178,12 @@
     <div class="sticky-header">
         <div class="result-title">예상 UPH</div>
         <div class="result-value" id="uph_result">128.7</div>
+        <br>
+        <div class="formula-text" id="formula_result">= 132 + (26 × 55) + 5 = 1567초</div>
+        <div class="bottleneck-text" id="bottleneck_result">
+            ⚠️ 핸들러 병목 (26초 > 15초)<br>
+            <span class="bottleneck-highlight">검사 시간은 11초 여유가 있어 UPH에 영향을 주지 않습니다.</span>
+        </div>
     </div>
 
     <h2>IMT UPH check</h2>
@@ -222,17 +248,15 @@
 </div>
 
 <script>
-    // 💡 화살표 버튼을 눌렀을 때 숫자를 증감시키는 함수
     function stepValue(inputId, step) {
         const inputEl = document.getElementById(inputId);
         let currentVal = parseFloat(inputEl.value) || 0;
         
-        // 0 이하로 내려가는 것을 방지 (마이너스 시간/수량 방지)
         let newVal = currentVal + step;
         if(newVal < 0) newVal = 0;
         
         inputEl.value = newVal;
-        calculate(); // 값이 바뀌었으니 즉시 UPH 재계산
+        calculate(); 
     }
 
     function calculate() {
@@ -243,15 +267,37 @@
         const finalTime = parseFloat(document.getElementById('final').value) || 0;
         
         const resultEl = document.getElementById('uph_result');
+        const formulaEl = document.getElementById('formula_result'); 
+        const bottleneckEl = document.getElementById('bottleneck_result'); 
+        
         let newUph = "0.0";
 
         if(lot > 1) {
             const bottleneck = Math.max(handler, tester);
-            const totalSec = init + (bottleneck * (lot - 1)) + finalTime;
+            const cycleCount = lot - 1;
+            const totalSec = init + (bottleneck * cycleCount) + finalTime;
             
             if(totalSec > 0) {
                 newUph = ((3600 / totalSec) * lot).toFixed(1);
+                formulaEl.innerText = `= ${init} + (${bottleneck} × ${cycleCount}) + ${finalTime} = ${totalSec}초`;
+                
+                // 💡 병목 및 여유 시간(Margin) 계산
+                if(handler > tester) {
+                    const margin = parseFloat((handler - tester).toFixed(1)); // 소수점 오차 방지
+                    bottleneckEl.innerHTML = `⚠️ <b>핸들러 병목</b> (${handler}초 &gt; ${tester}초)<br><span class="bottleneck-highlight">검사 시간은 ${margin}초 여유가 있어 UPH에 영향을 주지 않습니다.</span>`;
+                } else if(tester > handler) {
+                    const margin = parseFloat((tester - handler).toFixed(1));
+                    bottleneckEl.innerHTML = `⚠️ <b>검사 병목</b> (${tester}초 &gt; ${handler}초)<br><span class="bottleneck-highlight">핸들러 시간은 ${margin}초 여유가 있어 UPH에 영향을 주지 않습니다.</span>`;
+                } else {
+                    bottleneckEl.innerHTML = `✅ <b>병목 없음 (균형)</b> (${handler}초 = ${tester}초)<br><span style="color:#A5D6A7;">최적의 효율 상태입니다.</span>`;
+                }
+            } else {
+                formulaEl.innerText = "= 총 소요 시간 0초";
+                bottleneckEl.innerHTML = "";
             }
+        } else {
+            formulaEl.innerText = "= 최소 2개 이상의 Lot 필요";
+            bottleneckEl.innerHTML = "";
         }
 
         if(resultEl.innerText !== newUph) {
@@ -266,6 +312,8 @@
             }, 200);
         }
     }
+    
+    window.onload = calculate;
 </script>
 
 </body>
