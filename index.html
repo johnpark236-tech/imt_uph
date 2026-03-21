@@ -68,15 +68,32 @@
         }
 
         .bottleneck-text {
-            font-size: 12px;
-            margin-top: 8px;
-            color: rgba(255, 255, 255, 0.85);
-            line-height: 1.4;
+            font-size: 13px;
+            margin-top: 10px;
+            color: rgba(255, 255, 255, 0.95);
+            line-height: 1.5;
         }
         
         .bottleneck-highlight {
             color: #FFD700; 
             font-weight: bold;
+        }
+
+        .optimal-highlight {
+            color: #A5D6A7; 
+            font-weight: bold;
+        }
+
+        /* 💡 수정된 4초 룰 안내 문구 CSS */
+        .retry-note {
+            font-size: 11px;
+            color: #dcedc8;
+            display: block;
+            margin-top: 8px;
+            word-break: keep-all;
+            background: rgba(0,0,0,0.1);
+            padding: 6px;
+            border-radius: 6px;
         }
 
         h2 { 
@@ -181,9 +198,7 @@
         <br>
         <div class="formula-text" id="formula_result">= 132 + (26 × 55) + 5 = 1567초</div>
         <div class="bottleneck-text" id="bottleneck_result">
-            ⚠️ 핸들러 병목 (26초 > 15초)<br>
-            <span class="bottleneck-highlight">검사 시간은 11초 여유가 있어 UPH에 영향을 주지 않습니다.</span>
-        </div>
+            </div>
     </div>
 
     <h2>IMT UPH check</h2>
@@ -271,6 +286,8 @@
         const bottleneckEl = document.getElementById('bottleneck_result'); 
         
         let newUph = "0.0";
+        // 💡 수정된 안내 문구
+        const retryNote = `<span class="retry-note">※ 핸들러는 4초 이상 여유 필요, retry가 발생 UPH에 영향 없을것으로 예상됨.</span>`;
 
         if(lot > 1) {
             const bottleneck = Math.max(handler, tester);
@@ -281,15 +298,21 @@
                 newUph = ((3600 / totalSec) * lot).toFixed(1);
                 formulaEl.innerText = `= ${init} + (${bottleneck} × ${cycleCount}) + ${finalTime} = ${totalSec}초`;
                 
-                // 💡 병목 및 여유 시간(Margin) 계산
+                // 💡 4초 마진 룰에 따른 다이내믹 피드백
                 if(handler > tester) {
-                    const margin = parseFloat((handler - tester).toFixed(1)); // 소수점 오차 방지
-                    bottleneckEl.innerHTML = `⚠️ <b>핸들러 병목</b> (${handler}초 &gt; ${tester}초)<br><span class="bottleneck-highlight">검사 시간은 ${margin}초 여유가 있어 UPH에 영향을 주지 않습니다.</span>`;
+                    const margin = parseFloat((handler - tester).toFixed(1));
+                    bottleneckEl.innerHTML = `⚠️ <b>핸들러 병목</b> (${handler}초 &gt; ${tester}초)<br><span class="bottleneck-highlight">검사 시간은 ${margin}초 여유</span><br>${retryNote}`;
                 } else if(tester > handler) {
                     const margin = parseFloat((tester - handler).toFixed(1));
-                    bottleneckEl.innerHTML = `⚠️ <b>검사 병목</b> (${tester}초 &gt; ${handler}초)<br><span class="bottleneck-highlight">핸들러 시간은 ${margin}초 여유가 있어 UPH에 영향을 주지 않습니다.</span>`;
+                    if(margin >= 4) {
+                        // 4초 이상 여유: 최적 상태 표기
+                        bottleneckEl.innerHTML = `✅ <b>검사 병목 (최적)</b> (${tester}초 &gt; ${handler}초)<br><span class="optimal-highlight">핸들러 시간은 ${margin}초 여유 (핸들러 4초 여유 있을때가 최적임)</span><br>${retryNote}`;
+                    } else {
+                        // 4초 미만 여유
+                        bottleneckEl.innerHTML = `⚠️ <b>검사 병목</b> (${tester}초 &gt; ${handler}초)<br><span class="bottleneck-highlight">핸들러 시간은 ${margin}초 여유 (4초 여유 부족)</span><br>${retryNote}`;
+                    }
                 } else {
-                    bottleneckEl.innerHTML = `✅ <b>병목 없음 (균형)</b> (${handler}초 = ${tester}초)<br><span style="color:#A5D6A7;">최적의 효율 상태입니다.</span>`;
+                    bottleneckEl.innerHTML = `⚠️ <b>병목 없음 (균형)</b> (${handler}초 = ${tester}초)<br><span class="bottleneck-highlight">핸들러 여유 시간 없음 (4초 여유 부족)</span><br>${retryNote}`;
                 }
             } else {
                 formulaEl.innerText = "= 총 소요 시간 0초";
