@@ -11,21 +11,19 @@
             margin: 0; 
             display: flex; 
             justify-content: center; 
-            /* 스마트폰 키패드 올라올 때 대비 */
             min-height: 100vh; 
         }
         
         .calculator { 
             background: white; 
             width: 100%; 
-            max-width: 400px; /* 모바일에 꽉 차게 */
+            max-width: 400px; 
             box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
             position: relative;
             display: flex;
             flex-direction: column;
         }
 
-        /* 💡 1. 최상단 고정 결과창 (Sticky) */
         .sticky-header {
             position: sticky;
             top: 0;
@@ -46,7 +44,6 @@
             letter-spacing: 1px;
         }
         
-        /* 💡 2. 다이나믹 애니메이션을 위한 기본 스타일 */
         .result-value { 
             font-size: 42px; 
             font-weight: bold; 
@@ -54,10 +51,9 @@
             transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.2s; 
         }
 
-        /* JS로 값이 바뀔 때 순간적으로 추가될 클래스 */
         .result-value.pop {
-            transform: scale(1.2); /* 1.2배 커짐 */
-            color: #FFD700; /* 노란색(골드)으로 반짝임 */
+            transform: scale(1.2); 
+            color: #FFD700; 
         }
 
         h2 { 
@@ -76,30 +72,82 @@
             justify-content: space-between; 
             align-items: center; 
             margin-bottom: 12px; 
-            padding: 12px 15px; 
+            padding: 10px 15px; 
             background: #f9f9f9; 
             border-radius: 8px; 
             border: 1px solid #eaeaea;
         }
         
         label { font-weight: bold; color: #555; font-size: 14px; }
-        
+
+        /* 💡 커스텀 숫자 입력창 래퍼 설정 */
+        .custom-number-wrapper {
+            display: flex;
+            align-items: center;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background-color: white;
+            overflow: hidden;
+            width: 105px;
+            height: 38px;
+        }
+
+        .custom-number-wrapper:focus-within {
+            border-color: #0078D7;
+            box-shadow: 0 0 5px rgba(0, 120, 215, 0.3);
+        }
+
         input { 
-            width: 90px; 
-            padding: 10px; 
-            border: 1px solid #ccc; 
-            border-radius: 6px; 
+            width: 100%;
+            height: 100%;
+            padding: 0 5px 0 10px; 
+            border: none; 
             text-align: right; 
             font-size: 16px; 
             font-weight: bold; 
             color: #0078D7; 
-            background-color: white;
-        }
-        
-        input:focus {
             outline: none;
-            border-color: #0078D7;
-            box-shadow: 0 0 5px rgba(0, 120, 215, 0.3);
+            box-sizing: border-box;
+        }
+
+        /* 💡 기본 스피너(화살표) 완벽히 숨기기 (PC/Mobile 공통) */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        /* 💡 커스텀 화살표 버튼 디자인 */
+        .spinner-btns {
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid #ccc;
+            height: 100%;
+            width: 32px;
+            background-color: #f1f1f1;
+        }
+
+        .spin-btn {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 11px;
+            color: #555;
+            cursor: pointer;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent; /* 모바일 터치 시 파란 박스 제거 */
+        }
+
+        .spin-btn:active {
+            background-color: #dcdcdc; /* 터치 시 눌리는 시각 효과 */
+        }
+
+        .spin-up {
+            border-bottom: 1px solid #ccc;
         }
     </style>
 </head>
@@ -112,34 +160,81 @@
         <div class="result-value" id="uph_result">128.7</div>
     </div>
 
-    <h2>IMT 양산 UPH 계산기</h2>
+    <h2>IMT UPH check</h2>
 
     <div class="inputs-container">
         <div class="input-group">
             <label>Lot 수량 (개)</label>
-            <input type="number" inputmode="decimal" id="lot" value="56" oninput="calculate()">
+            <div class="custom-number-wrapper">
+                <input type="number" inputmode="decimal" id="lot" value="56" oninput="calculate()">
+                <div class="spinner-btns">
+                    <div class="spin-btn spin-up" onclick="stepValue('lot', 1)">▲</div>
+                    <div class="spin-btn spin-down" onclick="stepValue('lot', -1)">▼</div>
+                </div>
+            </div>
         </div>
+        
         <div class="input-group">
             <label>초기 로딩 (초)</label>
-            <input type="number" inputmode="decimal" id="init" value="132" oninput="calculate()">
+            <div class="custom-number-wrapper">
+                <input type="number" inputmode="decimal" id="init" value="132" oninput="calculate()">
+                <div class="spinner-btns">
+                    <div class="spin-btn spin-up" onclick="stepValue('init', 1)">▲</div>
+                    <div class="spin-btn spin-down" onclick="stepValue('init', -1)">▼</div>
+                </div>
+            </div>
         </div>
+        
         <div class="input-group">
             <label>핸들러 시간 (초)</label>
-            <input type="number" inputmode="decimal" id="handler" value="26" oninput="calculate()">
+            <div class="custom-number-wrapper">
+                <input type="number" inputmode="decimal" id="handler" value="26" oninput="calculate()">
+                <div class="spinner-btns">
+                    <div class="spin-btn spin-up" onclick="stepValue('handler', 1)">▲</div>
+                    <div class="spin-btn spin-down" onclick="stepValue('handler', -1)">▼</div>
+                </div>
+            </div>
         </div>
+        
         <div class="input-group">
             <label>검사 시간 (초)</label>
-            <input type="number" inputmode="decimal" id="tester" value="15" oninput="calculate()">
+            <div class="custom-number-wrapper">
+                <input type="number" inputmode="decimal" id="tester" value="15" oninput="calculate()">
+                <div class="spinner-btns">
+                    <div class="spin-btn spin-up" onclick="stepValue('tester', 1)">▲</div>
+                    <div class="spin-btn spin-down" onclick="stepValue('tester', -1)">▼</div>
+                </div>
+            </div>
         </div>
+        
         <div class="input-group">
             <label>최종 배출 (초)</label>
-            <input type="number" inputmode="decimal" id="final" value="5" oninput="calculate()">
+            <div class="custom-number-wrapper">
+                <input type="number" inputmode="decimal" id="final" value="5" oninput="calculate()">
+                <div class="spinner-btns">
+                    <div class="spin-btn spin-up" onclick="stepValue('final', 1)">▲</div>
+                    <div class="spin-btn spin-down" onclick="stepValue('final', -1)">▼</div>
+                </div>
+            </div>
         </div>
     </div>
 
 </div>
 
 <script>
+    // 💡 화살표 버튼을 눌렀을 때 숫자를 증감시키는 함수
+    function stepValue(inputId, step) {
+        const inputEl = document.getElementById(inputId);
+        let currentVal = parseFloat(inputEl.value) || 0;
+        
+        // 0 이하로 내려가는 것을 방지 (마이너스 시간/수량 방지)
+        let newVal = currentVal + step;
+        if(newVal < 0) newVal = 0;
+        
+        inputEl.value = newVal;
+        calculate(); // 값이 바뀌었으니 즉시 UPH 재계산
+    }
+
     function calculate() {
         const lot = parseFloat(document.getElementById('lot').value) || 0;
         const init = parseFloat(document.getElementById('init').value) || 0;
@@ -159,16 +254,13 @@
             }
         }
 
-        // 값이 이전과 다를 때만 업데이트하고 다이나믹 애니메이션 실행
         if(resultEl.innerText !== newUph) {
             resultEl.innerText = newUph;
             
-            // CSS 애니메이션 트리거 (클래스 뗐다 붙이기)
             resultEl.classList.remove('pop');
-            void resultEl.offsetWidth; // 브라우저에게 변경사항을 강제로 인식시킴 (Reflow)
+            void resultEl.offsetWidth; 
             resultEl.classList.add('pop');
             
-            // 0.2초 후 팝 효과 제거 (원래 상태로 자연스럽게 복귀)
             setTimeout(() => {
                 resultEl.classList.remove('pop');
             }, 200);
