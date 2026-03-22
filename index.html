@@ -294,6 +294,17 @@
             min-height: 120px;
         }
 
+        /* 👇 계산기 수식 표시 영역 CSS 추가 👇 */
+        .calc-display-equation {
+            color: rgba(51, 51, 51, 0.7); /* 메인 값 색상(#333)보다 연하게 (투명도 70%) */
+            font-size: 1.5rem; /* 메인 값(3rem)의 정확히 50% 크기 */
+            text-align: right;
+            word-wrap: break-word;
+            min-height: 1.8rem; /* 수식이 없을 때도 영역 높이 유지 */
+            margin-bottom: 5px; /* 결과값과 약간의 간격 */
+        }
+        /* 👆 ----------------------------- 👆 */
+
         .calc-display {
             color: #333;
             font-size: 3rem;
@@ -516,6 +527,39 @@
         .btn-to-sw { background-color: var(--check-green); color: white; }
         .btn-to-sw:active { background-color: #02a048; }
 
+        /* =========================================
+           5. 카카오톡 복사 버튼 CSS 
+           ========================================= */
+        .copy-btn-wrap {
+            padding: 5px 20px 15px 20px;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .copy-btn {
+            width: 100%;
+            padding: 12px;
+            /* 👇 배경을 회색으로 변경 👇 */
+            background-color: #d1d5d8; 
+            /* 👇 글씨 색상을 배경에 맞게 짙은 회색으로 조정 👇 */
+            color: #333333; 
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: background-color 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* 👇 클릭 효과도 어울리는 짙은 회색으로 변경 👇 */
+        .copy-btn:active { background-color: #b0b5b9; }
+
     </style>
 </head>
 <body>
@@ -658,6 +702,9 @@
             </div>
         </div>
         
+        <div class="copy-btn-wrap">
+            <button class="copy-btn" onclick="copyUPH()">💬 결과 복사하기</button>
+        </div>
         <div class="toggle-btn-wrap">
             <button class="toggle-btn btn-to-sw" onclick="switchMode('stopwatch')">⏱️ 스톱워치</button>
             <button class="toggle-btn btn-to-calc" onclick="switchMode('calc')">🧮 계산기</button>
@@ -667,6 +714,7 @@
     <div id="view_calc">
         <div class="calc-header">일반 계산기</div>
         <div class="display-container">
+            <div class="calc-display-equation" id="calc-display-equation"></div>
             <div class="calc-display" id="calc-display-value">0</div>
         </div>
         
@@ -697,6 +745,9 @@
             <button class="calc-btn btn-eq" onclick="calculateMath()">=</button>
         </div>
 
+        <div class="copy-btn-wrap" style="background-color: #f2f2f2; padding-top: 10px;">
+            <button class="copy-btn" onclick="copyCalc()">💬 결과 복사하기</button>
+        </div>
         <div class="toggle-btn-wrap" style="background-color: #e8e8e8;">
             <button class="toggle-btn btn-to-uph" onclick="switchMode('uph')">📊 UPH</button>
             <button class="toggle-btn btn-to-sw" onclick="switchMode('stopwatch')">⏱️ 스톱워치</button>
@@ -725,6 +776,9 @@
 
         <div class="lap-list" id="lap-list"></div>
 
+        <div class="copy-btn-wrap" style="padding-top: 10px;">
+            <button class="copy-btn" onclick="copyStopwatch()">💬 결과 복사하기</button>
+        </div>
         <div class="toggle-btn-wrap" style="width: 100%; background-color: var(--bg-color);">
             <button class="toggle-btn btn-to-uph" onclick="switchMode('uph')">📊 UPH</button>
             <button class="toggle-btn btn-to-calc" onclick="switchMode('calc')">🧮 계산기</button>
@@ -802,7 +856,6 @@
         document.getElementById('label_unload1').innerText = `핸들러 [소켓 out 1회] `;
         document.getElementById('label_final').innerText = `최종 트레이 배출 [종료] `;
 
-        // ======= 수정된 부분: <br> 제거하고 한 줄로 묶기 =======
         titleEffEl.innerHTML = `실효율 UPH <span style="font-size:11px; font-weight:normal; letter-spacing:0; margin-left:3px;">(${runtimeH}h, ${effPercent}%)</span>`;
 
         if(lot >= 6) {
@@ -912,6 +965,8 @@
 
     function clearDisplay() {
         calcDisplay.innerHTML = '0';
+        // 👇 수식 창도 함께 초기화 👇
+        document.getElementById('calc-display-equation').innerText = ''; 
     }
 
     function deleteLast() {
@@ -927,8 +982,12 @@
 
     function calculatePercent() {
         try {
-            var val = parseFloat(calcDisplay.innerHTML.replace(/,/g, ''));
+            var displayExpression = calcDisplay.innerHTML; 
+            var val = parseFloat(displayExpression.replace(/,/g, ''));
             var result = val / 100;
+            
+            // 👇 위에 수식 표시 👇
+            document.getElementById('calc-display-equation').innerText = displayExpression + '% =';
             calcDisplay.innerHTML = formatNumberWithCommas(result);
         } catch (e) {
             showError();
@@ -937,7 +996,8 @@
 
     function calculateMath() {
         try {
-            var expression = calcDisplay.innerHTML.replace(/,/g, '');
+            var displayExpression = calcDisplay.innerHTML; // 화면에 보이는 콤마 포함 수식 저장
+            var expression = displayExpression.replace(/,/g, '');
             expression = expression.split('×').join('*');
             expression = expression.split('÷').join('/');
             
@@ -946,6 +1006,10 @@
             if (result % 1 !== 0) {
                 result = parseFloat(result.toFixed(8));
             }
+
+            // 👇 = 버튼 누를 때, 윗줄에 원본 수식을 표시해줌 👇
+            document.getElementById('calc-display-equation').innerText = displayExpression + ' =';
+            
             calcDisplay.innerHTML = formatNumberWithCommas(result);
         } catch (e) {
             showError();
@@ -1051,7 +1115,109 @@
         swLapCount++;
     });
 
-    // 💡 최초 로딩 시 UPH 계산기 실행
+
+    // =========================================
+    // 4. 클립보드 복사(카카오톡 공유) 로직
+    // =========================================
+    
+    function copyToClipboard(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert("✅ 결과가 복사되었습니다. 원하는곳에 붙여넣기 하세요!");
+            }).catch(err => fallbackCopyTextToClipboard(text));
+        } else {
+            fallbackCopyTextToClipboard(text);
+        }
+    }
+
+    function fallbackCopyTextToClipboard(text) {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed"; 
+        textArea.style.left = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            alert("✅ 결과가 복사되었습니다. 카카오톡에 붙여넣기 하세요!");
+        } catch (err) {
+            alert("복사에 실패했습니다. 권한을 확인해주세요.");
+        }
+        document.body.removeChild(textArea);
+    }
+
+    function copyUPH() {
+        const lot = document.getElementById('lot').value;
+        const init = document.getElementById('init').value;
+        const handler = document.getElementById('handler').value;
+        const tester = document.getElementById('tester').value;
+        const unload5 = document.getElementById('unload5').value;
+        const unload1 = document.getElementById('unload1').value;
+        const final = document.getElementById('final').value;
+        const runtime = document.getElementById('runtime').value;
+        const eff = document.getElementById('efficiency').value;
+
+        const uphTheo = document.getElementById('uph_theo').innerText;
+        const uphEff = document.getElementById('uph_eff').innerText;
+        const outDay = document.getElementById('out_day').innerText;
+        const outWeek = document.getElementById('out_week').innerText;
+        const outMonth = document.getElementById('out_month').innerText;
+        
+        let text = `[IMT UPH 시뮬레이션 결과]\n\n`;
+        text += `📊 요약\n`;
+        text += `- UPH (100%): ${uphTheo}\n`;
+        text += `- 실효율 UPH: ${uphEff} (${runtime}h, ${eff}%)\n`;
+        text += `- 1일 예상: ${outDay}\n`;
+        text += `- 1주 예상: ${outWeek}\n`;
+        text += `- 한달 예상: ${outMonth}\n\n`;
+        
+        text += `⚙️ 상세 입력 조건\n`;
+        text += `- Lot 수량: ${lot}개\n`;
+        text += `- [In 6회]: ${init}초\n`;
+        text += `- [In/Out 반복]: ${handler}초\n`;
+        text += `- 검사 시간: ${tester}초\n`;
+        text += `- [Out 5회]: ${unload5}초\n`;
+        text += `- [Out 1회]: ${unload1}초\n`;
+        text += `- 최종 트레이: ${final}초\n`;
+
+        copyToClipboard(text);
+    }
+
+    // 👇 수정됨: 복사할 때 윗줄의 수식도 함께 포함되도록 변경 👇
+    function copyCalc() {
+        const val = document.getElementById('calc-display-value').innerText;
+        const eq = document.getElementById('calc-display-equation').innerText; 
+        
+        let text = `[IMT 계산기 결과]\n\n`;
+        if(eq) {
+            text += `👉 ${eq} ${val}\n`; // 예: 👉 6 × 3 = 18
+        } else {
+            text += `👉 ${val}\n`;
+        }
+        copyToClipboard(text);
+    }
+
+    function copyStopwatch() {
+        const mins = document.getElementById('display-mins').innerText;
+        const secs = document.getElementById('display-secs').innerText;
+        const ms = document.getElementById('display-ms').innerText;
+        const laps = document.querySelectorAll('.lap-item');
+        
+        let text = `[IMT 스톱워치 기록]\n\n`;
+        text += `⏱️ 현재 시간: ${mins}:${secs}.${ms}\n`;
+        
+        if (laps.length > 0) {
+            text += `\n📌 구간 기록:\n`;
+            laps.forEach(lap => {
+                const num = lap.querySelector('.lap-num').innerText;
+                const time = lap.querySelector('.lap-time').innerText;
+                text += `- ${num} : ${time}\n`;
+            });
+        }
+        copyToClipboard(text);
+    }
+
     window.onload = calculateUPH;
 </script>
 
