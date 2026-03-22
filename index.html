@@ -539,9 +539,7 @@
         .copy-btn {
             width: 100%;
             padding: 12px;
-            /* 👇 배경을 회색으로 변경 👇 */
             background-color: #d1d5d8; 
-            /* 👇 글씨 색상을 배경에 맞게 짙은 회색으로 조정 👇 */
             color: #333333; 
             border: none;
             border-radius: 8px;
@@ -557,8 +555,36 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* 👇 클릭 효과도 어울리는 짙은 회색으로 변경 👇 */
         .copy-btn:active { background-color: #b0b5b9; }
+
+        /* =========================================
+           6. 커스텀 팝업(토스트) CSS (추가됨)
+           ========================================= */
+        .toast-popup {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333333; /* 다크 그레이 배경 */
+            color: #ffffff;
+            text-align: center;
+            border-radius: 30px;
+            padding: 12px 20px;
+            position: fixed;
+            z-index: 1000;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            font-size: 14px;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s, bottom 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .toast-popup.show {
+            visibility: visible;
+            opacity: 1;
+            bottom: 50px; /* 나타날 때 살짝 위로 올라오는 효과 */
+        }
 
     </style>
 </head>
@@ -566,6 +592,7 @@
 
 <div class="app-container">
     
+    <div id="custom-toast" class="toast-popup">✅ 결과를 원하는곳에 붙여넣기 하세요!</div>
     <div id="view_uph">
         <div class="sticky-header">
             <div class="uph-dashboard">
@@ -965,7 +992,6 @@
 
     function clearDisplay() {
         calcDisplay.innerHTML = '0';
-        // 👇 수식 창도 함께 초기화 👇
         document.getElementById('calc-display-equation').innerText = ''; 
     }
 
@@ -986,7 +1012,6 @@
             var val = parseFloat(displayExpression.replace(/,/g, ''));
             var result = val / 100;
             
-            // 👇 위에 수식 표시 👇
             document.getElementById('calc-display-equation').innerText = displayExpression + '% =';
             calcDisplay.innerHTML = formatNumberWithCommas(result);
         } catch (e) {
@@ -996,7 +1021,7 @@
 
     function calculateMath() {
         try {
-            var displayExpression = calcDisplay.innerHTML; // 화면에 보이는 콤마 포함 수식 저장
+            var displayExpression = calcDisplay.innerHTML; 
             var expression = displayExpression.replace(/,/g, '');
             expression = expression.split('×').join('*');
             expression = expression.split('÷').join('/');
@@ -1007,7 +1032,6 @@
                 result = parseFloat(result.toFixed(8));
             }
 
-            // 👇 = 버튼 누를 때, 윗줄에 원본 수식을 표시해줌 👇
             document.getElementById('calc-display-equation').innerText = displayExpression + ' =';
             
             calcDisplay.innerHTML = formatNumberWithCommas(result);
@@ -1117,13 +1141,22 @@
 
 
     // =========================================
-    // 4. 클립보드 복사(카카오톡 공유) 로직
+    // 4. 클립보드 복사(공유) 로직
     // =========================================
+    
+    // 👇 커스텀 팝업 표시 함수 추가 👇
+    function showToast() {
+        const toast = document.getElementById("custom-toast");
+        toast.classList.add("show");
+        setTimeout(function(){
+            toast.classList.remove("show");
+        }, 2000); // 2초 후 사라짐
+    }
     
     function copyToClipboard(text) {
         if (navigator.clipboard && window.isSecureContext) {
             navigator.clipboard.writeText(text).then(() => {
-                alert("✅ 결과가 복사되었습니다. 원하는곳에 붙여넣기 하세요!");
+                showToast(); // 👈 브라우저 기본 alert 대신 커스텀 팝업 호출
             }).catch(err => fallbackCopyTextToClipboard(text));
         } else {
             fallbackCopyTextToClipboard(text);
@@ -1140,7 +1173,7 @@
         textArea.select();
         try {
             document.execCommand('copy');
-            alert("✅ 결과가 복사되었습니다. 카카오톡에 붙여넣기 하세요!");
+            showToast(); // 👈 브라우저 기본 alert 대신 커스텀 팝업 호출
         } catch (err) {
             alert("복사에 실패했습니다. 권한을 확인해주세요.");
         }
@@ -1184,14 +1217,13 @@
         copyToClipboard(text);
     }
 
-    // 👇 수정됨: 복사할 때 윗줄의 수식도 함께 포함되도록 변경 👇
     function copyCalc() {
         const val = document.getElementById('calc-display-value').innerText;
         const eq = document.getElementById('calc-display-equation').innerText; 
         
         let text = `[IMT 계산기 결과]\n\n`;
         if(eq) {
-            text += `👉 ${eq} ${val}\n`; // 예: 👉 6 × 3 = 18
+            text += `👉 ${eq} ${val}\n`; 
         } else {
             text += `👉 ${val}\n`;
         }
